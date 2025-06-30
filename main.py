@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import random
-import hashlib  # ✅ ใช้เพื่อทำให้สุ่มแบบคงที่
+import hashlib
 
 app = FastAPI()
 
@@ -18,7 +18,6 @@ class AnswerRequest(BaseModel):
     answer: str
 
 def deterministic_score(seed_text, min_score, max_score):
-    # สร้าง seed จาก hash ของคำตอบ
     hash_digest = hashlib.sha256(seed_text.encode()).hexdigest()
     seed = int(hash_digest, 16)
     rng = random.Random(seed)
@@ -31,16 +30,16 @@ def grade_answer(request: AnswerRequest):
 
     if word_count >= 60:
         score = deterministic_score(answer_text, 85, 100)
-        feedback = "คำตอบชัดเจน ครอบคลุมดีมาก"
+        feedback = "Clear and comprehensive explanation."
     elif word_count >= 40:
         score = deterministic_score(answer_text, 70, 85)
-        feedback = "อธิบายได้ดีระดับหนึ่ง เหลือรายละเอียดบางจุด"
+        feedback = "Good explanation with some missing details."
     elif word_count >= 20:
         score = deterministic_score(answer_text, 50, 70)
-        feedback = "คำตอบเริ่มมีแนวคิดที่ดี แต่ยังขาดความชัดเจน"
+        feedback = "Basic idea is present but lacks clarity."
     else:
         score = deterministic_score(answer_text, 0, 40)
-        feedback = "ควรอธิบายให้ชัดเจนมากขึ้น เช่น การทำงานหรือประโยชน์ของ ML"
+        feedback = "Needs clearer explanation, such as ML usage or concepts."
 
     return {
         "score": score,
@@ -49,4 +48,4 @@ def grade_answer(request: AnswerRequest):
 
 @app.get("/")
 def read_root():
-    return {"message": "👋 Welcome to the AI Autograde Backend!"}
+    return {"message": "Welcome to the AI Autograde Backend"}
