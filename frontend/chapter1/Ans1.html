@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Question 1</title>
+  <title>AI Autograder - Daily Life AI</title>
   <style>
     textarea { width: 100%; height: 120px; }
     .result { margin-top: 10px; font-weight: bold; }
@@ -17,12 +17,18 @@
   <script>
     const API_URL = "https://ai-autograde-backend-1.onrender.com/api/grade";
 
+    const IDEAL_ANSWER = `
+ตัวอย่างเช่น ระบบแนะนำวิดีโอบน YouTube หรือ TikTok ใช้ AI วิเคราะห์พฤติกรรมผู้ใช้
+เพื่อเสนอเนื้อหาที่น่าจะสนใจ ช่วยให้ผู้ใช้ไม่ต้องเสียเวลาเลือก และรับประสบการณ์ตรงตามความสนใจ
+AI ยังถูกใช้ในระบบแปลภาษาแบบเรียลไทม์ การช่วยเหลือในแอปนำทาง และผู้ช่วยเสียงอย่าง Siri หรือ Google Assistant
+`;
+
     function submitAnswer() {
       const answer = document.getElementById("answerInput").value;
       fetch(API_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ answer })
+        body: JSON.stringify({ answer, ideal: IDEAL_ANSWER })
       })
       .then(res => res.json())
       .then(data => {
