@@ -5,26 +5,22 @@ import random
 
 app = FastAPI()
 
-# ✅ เปิด CORS ให้ frontend สามารถเรียก API ได้ (เช่นจาก localhost หรือ edX iframe)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # ในอนาคตสามารถเปลี่ยนเป็น ["http://127.0.0.1:5500"]
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# ✅ สร้าง schema สำหรับรับข้อมูลจาก frontend
 class AnswerRequest(BaseModel):
     answer: str
 
-# ✅ สร้าง endpoint สำหรับให้คะแนนคำตอบ
 @app.post("/api/grade")
 def grade_answer(request: AnswerRequest):
     answer_text = request.answer.strip()
     word_count = len(answer_text.split())
 
-    # ✅ ให้คะแนนตามความยาวของคำตอบ (เหมาะกับคำตอบสั้น 3–5 บรรทัด)
     if word_count >= 60:
         score = random.randint(85, 100)
         feedback = "คำตอบชัดเจน ครอบคลุมดีมาก"
@@ -38,8 +34,12 @@ def grade_answer(request: AnswerRequest):
         score = random.randint(0, 40)
         feedback = "ควรอธิบายให้ชัดเจนมากขึ้น เช่น การทำงานหรือประโยชน์ของ ML"
 
-    # ✅ ส่งผลลัพธ์กลับไปยัง frontend
     return {
         "score": score,
         "feedback": feedback
     }
+
+# ✅ เพิ่มตรงนี้
+@app.get("/")
+def read_root():
+    return {"message": "👋 Welcome to the AI Autograde Backend!"}
