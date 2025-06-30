@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Question 10</title>
+  <style>
+    textarea { width: 100%; height: 120px; }
+    .result { margin-top: 10px; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <p>ให้นักเรียนยกตัวอย่างการใช้งาน AI ในชีวิตประจำวัน และอธิบายว่า AI นั้นช่วยปรับปรุงหรือแก้ปัญหาอะไรให้กับผู้ใช้บ้าง</p>
+  <textarea id="answerInput"></textarea>
+  <button onclick="submitAnswer()">ส่งคำตอบ</button>
+  <div id="result" class="result"></div>
+
+  <script>
+    const API_URL = "https://ai-autograde-backend-1.onrender.com/api/grade";
+
+    function submitAnswer() {
+      const answer = document.getElementById("answerInput").value;
+      fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ answer })
+      })
+      .then(res => res.json())
+      .then(data => {
+        document.getElementById("result").innerText =
+          `คะแนน: ${data.score} | Feedback: ${data.feedback}`;
+        window.parent.postMessage(JSON.stringify({
+          type: "grade",
+          value: JSON.stringify(data)
+        }), "*");
+      });
+    }
+
+    window.AIGrader = {
+      getState: () => {
+        return JSON.stringify({ answer: document.getElementById("answerInput").value });
+      },
+      setState: stateStr => {
+        const state = JSON.parse(stateStr);
+        document.getElementById("answerInput").value = state.answer || "";
+      },
+      getGrade: () => {
+        return JSON.stringify({ answer: document.getElementById("answerInput").value });
+      }
+    };
+  </script>
+</body>
+</html>
