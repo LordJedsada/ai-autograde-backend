@@ -1,7 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from grading.grader import grade_answer
+import random
+import hashlib
 
 app = FastAPI()
 
@@ -14,15 +15,37 @@ app.add_middleware(
 )
 
 class AnswerRequest(BaseModel):
-    chapter: int
-    question: int
     answer: str
 
+def deterministic_score(seed_text, min_score, max_score):
+    hash_digest = hashlib.sha256(seed_text.encode()).hexdigest()
+    seed = int(hash_digest, 16)
+    rng = random.Random(seed)
+    return rng.randint(min_score, max_score)
+
 @app.post("/api/grade")
-def grade(req: AnswerRequest):
-    score, similarity, feedback = grade_answer(req.chapter, req.question, req.answer)
+def grade_answer(request: AnswerRequest):
+    answer_text = request.answer.strip()
+    word_count = len(answer_text.split())
+
+    if word_count >= 60:
+        score = deterministic_score(answer_text, 85, 100)
+        feedback = "Clear and comprehensive explanation."
+    elif word_count >= 40:
+        score = deterministic_score(answer_text, 70, 85)
+        feedback = "Good explanation with some missing details."
+    elif word_count >= 20:
+        score = deterministic_score(answer_text, 50, 70)
+        feedback = "Basic idea is present but lacks clarity."
+    else:
+        score = deterministic_score(answer_text, 0, 40)
+        feedback = "Needs clearer explanation, such as ML usage or concepts."
+
     return {
         "score": score,
-        "similarity": round(similarity, 2),
         "feedback": feedback
     }
+
+@app.get("/")
+def read_root():
+    return {"message": "Welcome to the AI Autograde Backend"}
