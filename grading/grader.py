@@ -13,9 +13,10 @@ def compute_semantic_similarity(student_answer: str, reference_answer: str) -> f
 def grade_answer(chapter: int, question: int, answer_text: str):
     ideal = reference_answers.get(chapter, {}).get(question)
     if not ideal:
-        return {"score": 0, "feedback": "ไม่พบคำตอบอ้างอิงในระบบ กรุณาตรวจสอบเลขบทหรือคำถาม"}
+        return {"score": 0, "similarity": 0, "feedback": "ไม่พบคำตอบอ้างอิงในระบบ กรุณาตรวจสอบเลขบทหรือคำถาม"}
 
-    score = compute_semantic_similarity(answer_text, ideal)
+    similarity = compute_semantic_similarity(answer_text, ideal)
+    score = similarity  # ในที่นี้ใช้ similarity เป็นคะแนนโดยตรง
 
     # Feedback ตามช่วงคะแนน
     if score >= 90:
@@ -31,5 +32,7 @@ def grade_answer(chapter: int, question: int, answer_text: str):
 
     return {
         "score": score,
+        "similarity": similarity,
         "feedback": feedback
     }
+
