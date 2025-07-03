@@ -8,13 +8,13 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"],  # ควรระบุ URL ของ frontend ใน production
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# โหลดโมเดลฝึกจากหลายภาษา (รองรับคำตอบภาษาไทย)
+# โหลดโมเดล
 model = SentenceTransformer("paraphrase-multilingual-MiniLM-L12-v2")
 
 # ฟังก์ชันคำนวณ similarity
@@ -22,7 +22,7 @@ def compute_semantic_similarity(student_answer: str, reference_answer: str) -> f
     embedding1 = model.encode(student_answer, convert_to_tensor=True)
     embedding2 = model.encode(reference_answer, convert_to_tensor=True)
     similarity = util.pytorch_cos_sim(embedding1, embedding2).item()
-    return round(similarity * 100, 2)  # คืนค่า similarity เป็นเปอร์เซ็นต์
+    return round(similarity * 100, 2)
 
 class AnswerRequest(BaseModel):
     chapter: int
@@ -36,24 +36,23 @@ def grade_answer(request: AnswerRequest):
     word_count = len(answer_text.split())
 
     # สมมุติว่า reference_answer คือตัวคำตอบที่เราจะเปรียบเทียบ
-    # คุณอาจจะดึงมันจากฐานข้อมูลหรือไฟล์อื่นๆ
     reference_answer = "คำตอบอ้างอิงของคำถามนี้"
 
     # คำนวณ similarity
     similarity = compute_semantic_similarity(answer_text, reference_answer)
 
-    # ✅ ให้คะแนนตามความยาวของคำตอบ (เหมาะกับคำตอบสั้น 3–5 บรรทัด)
+    # ✅ ให้คะแนนตามความยาวของคำตอบ
     if word_count >= 60:
-        score = random.randint(85, 100)
+        score = round(similarity * 10)  # คะแนนตามความคล้ายคลึง
         feedback = "คำตอบชัดเจน ครอบคลุมดีมาก"
     elif word_count >= 40:
-        score = random.randint(70, 85)
+        score = round(similarity * 8)
         feedback = "อธิบายได้ดีระดับหนึ่ง เหลือรายละเอียดบางจุด"
     elif word_count >= 20:
-        score = random.randint(50, 70)
+        score = round(similarity * 6)
         feedback = "คำตอบเริ่มมีแนวคิดที่ดี แต่ยังขาดความชัดเจน"
     else:
-        score = random.randint(0, 40)
+        score = round(similarity * 4)
         feedback = "ควรอธิบายให้ชัดเจนมากขึ้น เช่น การทำงานหรือประโยชน์ของ ML"
 
     # ✅ ส่งผลลัพธ์กลับไปยัง frontend
