@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from sentence_transformers import SentenceTransformer, util
 import random
 
 app = FastAPI()
@@ -13,6 +14,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# โหลดโมเดลฝึกจากหลายภาษา (รองรับคำตอบภาษาไทย)
+model = SentenceTransformer("paraphrase-multilingual-MiniLM-L12-v2")
+
+# ฟังก์ชันคำนวณ similarity
+def compute_semantic_similarity(student_answer: str, reference_answer: str) -> float:
+    embedding1 = model.encode(student_answer, convert_to_tensor=True)
+    embedding2 = model.encode(reference_answer, convert_to_tensor=True)
+    similarity = util.pytorch_cos_sim(embedding1, embedding2).item()
+    return round(similarity * 100, 2)  # คืนค่า similarity เป็นเปอร์เซ็นต์
+
 class AnswerRequest(BaseModel):
     chapter: int
     question: int
@@ -23,6 +34,13 @@ class AnswerRequest(BaseModel):
 def grade_answer(request: AnswerRequest):
     answer_text = request.answer.strip()
     word_count = len(answer_text.split())
+
+    # สมมุติว่า reference_answer คือตัวคำตอบที่เราจะเปรียบเทียบ
+    # คุณอาจจะดึงมันจากฐานข้อมูลหรือไฟล์อื่นๆ
+    reference_answer = "คำตอบอ้างอิงของคำถามนี้"
+
+    # คำนวณ similarity
+    similarity = compute_semantic_similarity(answer_text, reference_answer)
 
     # ✅ ให้คะแนนตามความยาวของคำตอบ (เหมาะกับคำตอบสั้น 3–5 บรรทัด)
     if word_count >= 60:
@@ -41,7 +59,7 @@ def grade_answer(request: AnswerRequest):
     # ✅ ส่งผลลัพธ์กลับไปยัง frontend
     return {
         "score": score,
-        "similarity": round(similarity, 2),
+        "similarity": similarity,
         "feedback": feedback
     }
 
