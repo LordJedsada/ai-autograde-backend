@@ -20,7 +20,7 @@
     // อ่าน query parameter จาก URL
     const queryParams = new URLSearchParams(window.location.search);
     const question = queryParams.get("question");  // เช่น "1_1" หรือ "2_3"
-    const chapter = 1;  // กำหนด chapter ตามที่ต้องการ
+    const chapter = queryParams.get("chapter") || 1;  // กำหนด chapter ตามที่ต้องการ ถ้าไม่มีกำหนดให้เป็น 1
 
     // สร้าง map สำหรับคำถามในแต่ละบท
     const questionMap = {
@@ -156,6 +156,11 @@
     function submitAnswer() {
       const answer = document.getElementById("answerInput").value;
 
+      if (!question || !answer.trim()) {
+        alert("กรุณากรอกคำตอบให้ครบถ้วน");
+        return;
+      }
+
       // ส่งข้อมูลทั้งหมดไปยัง API
       fetch(API_URL, {
         method: "POST",
@@ -176,7 +181,10 @@
           value: JSON.stringify(data)
         }), "*");
       })
-      .catch(error => console.error('Error:', error));  // ถ้ามีข้อผิดพลาดแสดงออกมาที่ console
+      .catch(error => {
+        console.error('Error:', error);
+        alert("เกิดข้อผิดพลาดในการส่งคำตอบ");
+      });  // ถ้ามีข้อผิดพลาดแสดงออกมาที่ console
     }
   </script>
 </body>
