@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <title>AI Autograde ทดสอบ</title>
+  <style>
+    body {
+      font-family: "Segoe UI", sans-serif;
+      margin: 20px;
+    }
+    textarea {
+      width: 100%;
+      height: 150px;
+    }
+    input, button {
+      padding: 8px;
+      margin: 5px 0;
+      font-size: 16px;
+    }
+    #result {
+      margin-top: 15px;
+      padding: 10px;
+      border: 1px solid #ccc;
+      background: #f9f9f9;
+    }
+    #questionBox {
+      margin-top: 10px;
+      padding: 10px;
+      background: #eaf4ff;
+      border: 1px solid #bcd;
+    }
+  </style>
+</head>
+<body>
+  <h2>🧠 ระบบตรวจคำตอบอัตโนมัติ (AI Autograde)</h2>
+
+  <label for="chapter">บทที่:</label>
+  <input type="number" id="chapter" value="1" min="1" onchange="loadQuestion()"><br>
+
+  <label for="question">ข้อที่:</label>
+  <input type="number" id="question" value="1" min="1" onchange="loadQuestion()"><br>
+
+  <div id="questionBox"><strong>📌 คำถาม:</strong> <span id="questionText">กำลังโหลด...</span></div>
+
+  <label for="answer">คำตอบของคุณ:</label><br>
+  <textarea id="answer" placeholder="พิมพ์คำตอบที่นี่..."></textarea><br>
+
+  <button onclick="submitAnswer()">✅ ส่งคำตอบ</button>
+
+  <div id="result"></div>
+
+  <script>
+    async function loadQuestion() {
+      const chapter = parseInt(document.getElementById("chapter").value);
+      const question = parseInt(document.getElementById("question").value);
+      const response = await fetch("http://127.0.0.1:8000/api/question", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chapter, question })
+      });
+
+      if (!response.ok) {
+        document.getElementById("questionText").innerText = "❌ ไม่สามารถโหลดคำถามได้";
+        return;
+      }
+
+      const data = await response.json();
+      document.getElementById("questionText").innerText = data.question;
+    }
+
+    async function submitAnswer() {
+      const chapter = parseInt(document.getElementById("chapter").value);
+      const question = parseInt(document.getElementById("question").value);
+      const answer = document.getElementById("answer").value.trim();
+
+      const response = await fetch("http://127.0.0.1:8000/api/grade", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chapter, question, answer })
+      });
+
+      if (!response.ok) {
+        document.getElementById("result").innerHTML = "❌ ไม่สามารถเชื่อมต่อ API ได้";
+        return;
+      }
+
+      const result = await response.json();
+      document.getElementById("result").innerHTML = `
+        <p><strong>📊 คะแนน:</strong> ${result.score}</p>
+        <p><strong>🔍 Similarity:</strong> ${result.similarity}</p>
+        <p><strong>📝 Feedback:</strong> ${result.feedback}</p>
+      `;
+    }
+
+    // ✅ โหลดคำถามทันทีเมื่อเปิดหน้า
+    window.onload = loadQuestion;
+  </script>
+</body>
+</html>

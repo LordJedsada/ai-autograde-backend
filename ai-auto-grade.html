@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <title>AI Autograde</title>
+  <style>
+    body { font-family: sans-serif; margin: 20px; }
+    textarea { width: 100%; height: 120px; font-size: 1rem; }
+    button { margin-top: 10px; padding: 8px 16px; }
+    .result { margin-top: 20px; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h2>AI Autograde</h2>
+
+  <label for="question">คำถาม:</label><br>
+  <p><strong>AI คืออะไร?</strong> (ตัวอย่างบทที่ 1 ข้อ 1)</p>
+
+  <textarea id="answerInput" placeholder="พิมพ์คำตอบของคุณที่นี่..."></textarea><br>
+  <button onclick="submitAnswer()">ส่งคำตอบ</button>
+
+  <div id="result" class="result"></div>
+
+  <script>
+    const API_URL = "http://127.0.0.1:8000/api/grade";  // ถ้า deploy จริง ค่อยเปลี่ยนเป็น URL online
+
+    function submitAnswer() {
+      const answer = document.getElementById("answerInput").value;
+
+      if (!answer.trim()) {
+        alert("กรุณากรอกคำตอบก่อนส่ง");
+        return;
+      }
+
+      // ส่งข้อมูลไปยัง API
+      fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chapter: 1,
+          question: 1,
+          answer: answer
+        })
+      })
+      .then(response => response.json())
+      .then(data => {
+        document.getElementById("result").innerText =
+          `✅ คะแนน: ${data.score} | ความคล้ายคลึง: ${data.similarity}%\n📝 Feedback: ${data.feedback}`;
+      })
+      .catch(error => {
+        console.error("Error:", error);
+        alert("เกิดข้อผิดพลาดในการส่งข้อมูล");
+      });
+    }
+  </script>
+</body>
+</html>
