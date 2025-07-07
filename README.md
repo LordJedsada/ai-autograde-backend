@@ -12,8 +12,4 @@
 1. ติดตั้ง dependencies:
    ```bash
    pip install -r requirements.txt
-2.รันเซิร์ฟเวอร์:
-    uvicorn main:app --reload
-3.เรียก API ที่:
-    POST /api/grade
-4.เชื่อมกับ Open edX ผ่าน customresponse + jsinput
+   
