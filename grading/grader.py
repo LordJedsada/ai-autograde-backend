@@ -1,8 +1,8 @@
-# grader.py
 from sentence_transformers import SentenceTransformer, util
 from grading.answer_data import reference_answers
-from grading.question_data import questions  # ✅ เพิ่ม
+from grading.question_data import questions
 
+# โหลดโมเดลฝั่งเราเอง
 model = SentenceTransformer("paraphrase-multilingual-MiniLM-L12-v2")
 
 def grade(chapter: int, question: int, student_answer: str) -> dict:
@@ -36,5 +36,5 @@ def grade(chapter: int, question: int, student_answer: str) -> dict:
         "score": score,
         "similarity": score,
         "feedback": feedback,
-        "question": question_text  # ✅ เพิ่มบรรทัดนี้
+        "question": question_text
     }

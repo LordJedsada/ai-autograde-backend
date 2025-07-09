@@ -1,59 +1,45 @@
-import os
-import json
-import requests
-from dotenv import load_dotenv
-from grading.question_data import questions
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+from grading.grader import grade  # ใช้ grader ที่ตาเขียน
+from grading.question_data import questions  # ใช้แสดงคำถาม
 
-load_dotenv()
+app = FastAPI()
 
-HF_TOKEN = os.getenv("HF_TOKEN")
-HF_MODEL = os.getenv("HF_MODEL", "google/flan-t5-base")
+# ✅ เพิ่ม CORS Middleware (เพื่อให้เรียก API จาก frontend ได้)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # เปลี่ยนเป็น origin จริงใน production
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-def grade(chapter: int, question: int, student_answer: str):
-    key = f"{chapter}_{question}"
-    question_text = questions.get(chapter, {}).get(key, {}).get("question", "")
-    reference_answer = questions.get(chapter, {}).get(key, {}).get("answer", "")
+# ✅ รับข้อมูลคำตอบจากผู้ใช้
+class AnswerRequest(BaseModel):
+    chapter: int
+    question: int
+    answer: str
 
-    if not question_text or not reference_answer:
-        return {"error": "❌ ไม่พบคำถามหรือคำตอบอ้างอิง"}
+# ✅ ใช้ขอคำถามไปแสดงใน frontend
+class QuestionRequest(BaseModel):
+    chapter: int
+    question: int
 
-    prompt = f"""
-You are an AI grader.
+# ✅ Endpoint สำหรับประเมินคำตอบ
+@app.post("/api/grade")
+def grade_answer(request: AnswerRequest):
+    return grade(
+        chapter=request.chapter,
+        question=request.question,
+        student_answer=request.answer
+    )
 
-Question: {question_text}
-Reference Answer: {reference_answer}
-Student Answer: {student_answer}
-
-Give score (0-10) and brief feedback in JSON format like:
-{{"score": 8, "feedback": "Good explanation but lacks detail."}}
-"""
-
-    headers = {"Authorization": f"Bearer {HF_TOKEN}"}
-    url = f"https://api-inference.huggingface.co/models/{HF_MODEL}"
-
-    try:
-        response = requests.post(url, headers=headers, json={"inputs": prompt})
-        result = response.json()
-        raw_text = result[0]["generated_text"]
-
-        try:
-            feedback_json = json.loads(raw_text)
-        except json.JSONDecodeError:
-            return {
-                "question": question_text,
-                "reference_answer": reference_answer,
-                "student_answer": student_answer,
-                "score": 0,
-                "feedback": "⚠️ Model did not return valid JSON: " + raw_text
-            }
-
-        return {
-            "question": question_text,
-            "reference_answer": reference_answer,
-            "student_answer": student_answer,
-            "score": feedback_json.get("score", 0),
-            "feedback": feedback_json.get("feedback", "No feedback returned.")
-        }
-
-    except Exception as e:
-        return {"error": str(e)}
+# ✅ Endpoint สำหรับดึงคำถามตามบทและข้อ
+@app.post("/api/question")
+def get_question(request: QuestionRequest):
+    key = f"{request.chapter}_{request.question}"
+    q = questions.get(request.chapter, {}).get(key)
+    return {
+        "question": q or "❌ ไม่พบคำถามในบทที่นี้"
+    }
