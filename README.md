@@ -1,15 +1,22 @@
-# AI Autograde API (FastAPI)
+# AI Auto-Grader (FastAPI)
 
-ระบบตรวจคำตอบอัตโนมัติด้วย AI สำหรับใช้ร่วมกับ Open edX หรือระบบการเรียนออนไลน์อื่น ๆ
+🚀 This Space hosts a FastAPI backend for automatic grading using Hugging Face Inference API.
 
-## โครงสร้างระบบ
-- Backend: FastAPI
-- Embedding Model: SentenceTransformer (BGE-M3)
-- Scoring: Cosine Similarity กับ Reference Answer
-- Frontend: HTML + JavaScript หรือใช้งานร่วมกับ XML ใน Open edX
+## Endpoints
 
-## วิธีใช้งาน
-1. ติดตั้ง dependencies:
-   ```bash
-   pip install -r requirements.txt
-   
+- `/api/grade`: Grade a student's answer
+- `/api/question`: Retrieve question text
+
+## Environment Variables
+
+Set these in Hugging Face Space "Repository secrets":
+
+- `HF_TOKEN`: Your Hugging Face Inference API Token
+- `HF_MODEL`: (default: `google/flan-t5-base`)
+
+## Deploy
+
+1. Clone this repo
+2. Create a Hugging Face Space (SDK = Docker)
+3. Add secrets under Settings > Repository secrets
+4. Done ✅
